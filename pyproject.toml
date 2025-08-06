@@ -1,0 +1,11 @@
+[project]
+name = "seatgeek-mcp"
+version = "0.1.0"
+description = "SeatGeek MCP Agent for Open WebUI"
+authors = ["Peter Shin <psshin.code@gmail.com>"]
+
+dependencies = [  
+  "modelcontextprotocol",
+  "requests",
+  "python-dotenv"
+]
