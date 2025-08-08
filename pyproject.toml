@@ -1,11 +1,24 @@
 [project]
 name = "seatgeek-mcp"
 version = "0.1.0"
-description = "SeatGeek MCP Agent for Open WebUI"
-authors = ["Peter Shin <psshin.code@gmail.com>"]
+description = "SeatGeek MCP server exposing SeatGeek event tools (find, analyze prices, recommend, generate links) for MCP clients."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Peter Shin", email = "psshin.code@gmail.com" }]
 
-dependencies = [  
-  "modelcontextprotocol",
-  "requests",
-  "python-dotenv"
+dependencies = [
+  "modelcontextprotocol==0.1.0",
+  "requests>=2.31,<3.0",
+  "python-dotenv>=1.0,<2.0",
+  "mcp[cli]>=1.10.1",
+  "httpx>=0.28.1",
+]
+
+[project.optional-dependencies]
+http = [
+  "fastapi>=0.116,<0.117",
+  "uvicorn>=0.30,<0.36"
+]
+dev = [
+  "pytest>=8.0,<9.0"
 ]
