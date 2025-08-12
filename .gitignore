@@ -1,4 +1,11 @@
 .env
 .venv
 
+# Coding Assistant
+.cursor
+.github
+
 personal.md
+
+node_modules
+dist
