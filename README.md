@@ -1,6 +1,6 @@
 # seatgeek-mcp
 
-Minimal MCP server exposing SeatGeek tools (events and performers) as a TypeScript library.
+Comprehensive MCP server exposing a registry of SeatGeek tools including events, performers, venues, section info, and recommendations as a TypeScript library.
 
 ## Prerequisites
 
@@ -36,8 +36,21 @@ MCP_HTTP=1 PORT=8080 npm start
 ## Environment Variables
 
 - `SEATGEEK_CLIENT_ID`: Your SeatGeek API client ID (required)
+- `SEATGEEK_SECRET`: Your SeatGeek API secret (optional)
 - `MCP_HTTP`: Set to any value to enable HTTP transport instead of STDIO
 - `PORT`: Port to listen on when using HTTP transport (default: 8080)
+
+## Setting up Environment Variables
+
+To use this MCP server, you need to set up a `.env` file in the root directory with your SeatGeek API credentials:
+
+1. Copy the `.env.example` file to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Edit the `.env` file and replace the placeholder values with your actual SeatGeek API credentials
+
+You can obtain your SeatGeek API credentials by creating an account at [SeatGeek Platform](https://seatgeek.com/build).
 
 ## Development
 
