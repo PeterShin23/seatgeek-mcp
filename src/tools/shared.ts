@@ -8,6 +8,9 @@ dotenv.config();
 const SEATGEEK_API_BASE = "https://api.seatgeek.com/2";
 export const EVENTS_ENDPOINT = `${SEATGEEK_API_BASE}/events`;
 export const PERFORMERS_ENDPOINT = `${SEATGEEK_API_BASE}/performers`;
+export const VENUES_ENDPOINT = `${SEATGEEK_API_BASE}/venues`;
+export const SECTION_INFO_ENDPOINT = `${SEATGEEK_API_BASE}/events/section_info`;
+export const RECOMMENDATIONS_ENDPOINT = `${SEATGEEK_API_BASE}/recommendations`;
 
 // Networking defaults
 const DEFAULT_TIMEOUT_MS = 5000;

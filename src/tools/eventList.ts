@@ -80,7 +80,7 @@ const inputSchema = {
  * List SeatGeek events with simple filters (q, performer, venue, time, type).
  * Returns structured models or raw JSON with format='json'.
  */
-export const findEventsTool = {
+export const listEventsTool = {
   name: 'seatgeek_events',
   description: 'List SeatGeek events with simple filters (q, performer, venue, time, type). Returns structured models or raw JSON with format="json".',
   inputSchema: inputSchema,

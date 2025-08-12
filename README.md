@@ -15,39 +15,6 @@ npm install seatgeek-mcp
 
 ## Usage
 
-### As a Library
-
-```typescript
-import { Server } from 'seatgeek-mcp';
-import { findEventsTool, listPerformersTool } from 'seatgeek-mcp';
-
-// Create server
-const server = new Server({
-  name: 'seatgeek',
-  version: '0.1.0'
-});
-
-// Register tools
-server.addTool(findEventsTool);
-server.addTool(listPerformersTool);
-
-// Start server
-async function start() {
-  // For HTTP transport
-  if (process.env.MCP_HTTP) {
-    const port = parseInt(process.env.PORT || '8080', 10);
-    await server.listenHttp({ port });
-    console.log(`Server running on http://localhost:${port}`);
-  } else {
-    // For STDIO transport (default)
-    await server.listenStdio();
-    console.log('Server running over stdio');
-  }
-}
-
-start().catch(console.error);
-```
-
 ### As a Standalone Server
 
 ```bash
@@ -60,9 +27,11 @@ MCP_HTTP=1 PORT=8080 npm start
 
 ## Tools
 
-- `ping`: Health check tool - returns 'pong'
-- `seatgeek_events`: List/search events. Set `format="json"` for raw API JSON.
-- `seatgeek_performers`: List/search performers. Set `format="json"` for raw API JSON.
+- `list_events`: List SeatGeek events with simple filters (q, performer, venue, time, type). Returns structured models or raw JSON with format="json".
+- `list_performers`: List SeatGeek performers with simple filters (q, id, slug, type). Returns structured models or raw JSON with format="json".
+- `list_venues`: List SeatGeek venues with simple filters (city, state, country, postal_code, q, id). Returns structured models or raw JSON with format="json".
+- `get_event_sections_info`: Get section and row information for a specific event. Returns detailed information about the sections and rows available for a specific event.
+- `list_event_recommendations`: Get recommended events based on seed parameters (performer, event, location). Returns structured models or raw JSON with format="json".
 
 ## Environment Variables
 
@@ -94,3 +63,33 @@ npm run dev
 
 ```bash
 npm run clean
+```
+
+### Testing the Server
+
+You can test the server in several ways:
+
+1. **Using HTTP transport (easiest for testing):**
+   ```bash
+   MCP_HTTP=1 PORT=8080 npm start
+   ```
+
+2. **Using curl to test tools:**
+   ```bash
+   # List available tools
+   curl -X POST http://localhost:8080 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}'
+   
+   # Call a specific tool (example)
+   curl -X POST http://localhost:8080 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "list_events", "arguments": {"q": "concert", "per_page": 5}}}'
+   ```
+
+3. **Using the test scripts:**
+   ```bash
+   # Run the simple test server script
+   npm run test-server
+   
+   # Run the comprehensive tool tests (requires server to be running separately)
+   npm run test-tools
+   ```
+
+The server implements the Model Context Protocol (MCP) specification, so it can be used with any MCP-compatible client.

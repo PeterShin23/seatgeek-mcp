@@ -12,7 +12,9 @@
     "build": "tsc",
     "dev": "ts-node src/server.ts",
     "start": "node dist/server.js",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test-tools": "node test/test-tools.js",
+    "test-server": "node test/test-server.js"
   },
   "keywords": [
     "mcp",
