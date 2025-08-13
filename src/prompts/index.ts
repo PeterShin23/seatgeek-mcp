@@ -7,6 +7,7 @@ Mapping Instructions:
 - Map performer to the artist's name (not the tour).
 - Use date_range (YYYY-MM-DD..YYYY-MM-DD). If user says 'next 12 weeks', convert to an ISO range.
 - If both performer and venue are present, prefer performer+city unless the venue is unique.
+- parameter "q" is a free-text search that should be used if no other filters are matched and/or provided. If there's information that is already captured in other parameters, do not repeat it in "q".
 
 Examples:
 1. User: "Find concerts by The Weeknd"
