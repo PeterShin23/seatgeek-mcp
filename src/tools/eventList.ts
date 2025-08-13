@@ -5,10 +5,6 @@ import { EVENTS_ENDPOINT, withClientId, fetchJson } from './shared.js';
 // Events query schema
 const EventsQuerySchema = z.object({
   q: z.string().nullable().optional(),
-  id: z.number().nullable().optional(),
-  type: z.string().nullable().optional(),
-  addons_visible: z.boolean().nullable().optional(),
-  performer_id: z.number().nullable().optional(),
   performer_slug: z.string().nullable().optional(),
   venue_city: z.string().nullable().optional(),
   venue_state: z.string().nullable().optional(),
@@ -18,7 +14,7 @@ const EventsQuerySchema = z.object({
   per_page: z.number().min(1).max(50).default(10),
   page: z.number().min(1).default(1),
   sort: z.string().nullable().optional(),
-  format: z.enum(['structured', 'json']).default('structured'),
+  format: z.enum(['structured', 'json']).default('structured').describe('Always use "structured" unless the user explicitly requests raw JSON. This is for output formatting, not for API parsing.'),
 });
 
 type EventsQuery = z.infer<typeof EventsQuerySchema>;
@@ -26,10 +22,6 @@ type EventsQuery = z.infer<typeof EventsQuerySchema>;
 function buildQuery(params: EventsQuery): Record<string, any> {
   const query: Record<string, any> = {
     q: params.q,
-    id: params.id,
-    type: params.type,
-    addons_visible: params.addons_visible,
-    "performers.id": params.performer_id,
     "performers.slug": params.performer_slug,
     "venue.city": params.venue_city,
     "venue.state": params.venue_state,
@@ -59,15 +51,11 @@ function buildQuery(params: EventsQuery): Record<string, any> {
 }
 
 const inputSchema = {
-  q: z.string().optional().describe('Free-text search'),
-  id: z.number().optional().describe('Specific event id'),
-  type: z.string().optional().describe('Event type filter'),
-  addons_visible: z.boolean().optional(),
-  performer_id: z.number().optional().describe('Performer ID'),
-  performer_slug: z.string().optional().describe('Performer slug'),
-  venue_city: z.string().optional().describe('Venue city'),
-  venue_state: z.string().optional().describe('Venue state'),
-  venue_country: z.string().optional().describe('Venue country'),
+  q: z.string().optional().describe('Free-text search that should be used if no other filters are matched and/or provided'),
+  performer_slug: z.string().optional().describe('The slug of the performer to filter events by, e.g., "the-weeknd"'),
+  venue_city: z.string().optional().describe('City of the venue'),
+  venue_state: z.string().optional().describe('State of the venue'),
+  venue_country: z.string().optional().describe('Country of the venue'),
   start_utc: z.string().optional().describe('ISO8601 UTC start'),
   end_utc: z.string().optional().describe('ISO8601 UTC end'),
   per_page: z.number().min(1).max(50).default(10),
@@ -82,7 +70,7 @@ const inputSchema = {
  */
 export const listEventsTool = {
   name: 'seatgeek_events',
-  description: 'List SeatGeek events with simple filters (q, performer, venue, time, type). Returns structured models or raw JSON with format="json".',
+  description: 'List events held by performers with simple filters. Map performer to the artist\'s name (not the tour). Use date_range (YYYY-MM-DD..YYYY-MM-DD) for time filters. If both performer and venue are present, prefer performer+city unless the venue is unique. Returns structured models or raw JSON with format="json".',
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
     // Validate input

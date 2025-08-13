@@ -13,7 +13,7 @@ const VenuesQuerySchema = z.object({
   per_page: z.number().min(1).max(50).default(10),
   page: z.number().min(1).default(1),
   sort: z.string().nullable().optional(),
-  format: z.enum(['structured', 'json']).default('structured'),
+  format: z.enum(['structured', 'json']).default('structured').describe('Always use "structured" unless the user explicitly requests raw JSON. This is for output formatting, not for API parsing.'),
 });
 
 type VenuesQuery = z.infer<typeof VenuesQuerySchema>;
@@ -47,7 +47,7 @@ const inputSchema = {
   state: z.string().optional().describe('Venue state'),
   country: z.string().optional().describe('Venue country'),
   postal_code: z.string().optional().describe('Venue postal code'),
-  q: z.string().optional().describe('Free-text search'),
+  q: z.string().optional().describe('Free-text search that should be used if no other filters are matched and/or provided'),
   id: z.number().optional().describe('Specific venue id'),
   per_page: z.number().min(1).max(50).default(10),
   page: z.number().min(1).default(1),
@@ -61,7 +61,7 @@ const inputSchema = {
  */
 export const listVenuesTool = {
   name: 'seatgeek_venues',
-  description: 'List SeatGeek venues with simple filters (city, state, country, postal_code, q, id). Returns structured models or raw JSON with format="json".',
+  description: 'List venues where performers are holding events (city, state, country, postal_code). If both performer and venue are present, prefer performer+city unless the venue is unique. Returns structured models or raw JSON with format="json".',
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
     // Validate input

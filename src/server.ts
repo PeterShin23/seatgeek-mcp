@@ -9,14 +9,15 @@ import { sectionInfoTool } from './tools/sectionInfo.js';
 import { recommendationsTool } from './tools/recommendations.js';
 import { createServer } from 'http';
 import { randomUUID } from 'crypto';
+import { systemInstructions } from './prompts/index.js';
 
-// Load environment variables
 dotenv.config();
 
-// Create MCP server
 const mcpServer = new McpServer({
   name: 'seatgeek',
   version: '0.1.0',
+}, {
+  instructions: systemInstructions,
 });
 
 // Register tools

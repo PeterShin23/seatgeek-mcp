@@ -5,14 +5,11 @@ import { PERFORMERS_ENDPOINT, withClientId, fetchJson } from './shared.js';
 // Performers query schema
 const PerformersQuerySchema = z.object({
   q: z.string().nullable().optional(),
-  id: z.number().nullable().optional(),
   slug: z.string().nullable().optional(),
-  type: z.string().nullable().optional(),
-  taxonomies: z.record(z.string()).nullable().optional(),
   per_page: z.number().min(1).max(50).default(10),
   page: z.number().min(1).default(1),
   sort: z.string().nullable().optional(),
-  format: z.enum(['structured', 'json']).default('structured'),
+  format: z.enum(['structured', 'json']).default('structured').describe('Always use "structured" unless the user explicitly requests raw JSON. This is for output formatting, not for API parsing.'),
 });
 
 type PerformersQuery = z.infer<typeof PerformersQuerySchema>;
@@ -20,19 +17,11 @@ type PerformersQuery = z.infer<typeof PerformersQuerySchema>;
 function buildQuery(params: PerformersQuery): Record<string, any> {
   const query: Record<string, any> = {
     q: params.q,
-    id: params.id,
     slug: params.slug,
-    type: params.type,
     per_page: Math.min(params.per_page, 50),
     page: params.page,
     sort: params.sort,
   };
-
-  if (params.taxonomies) {
-    for (const [key, value] of Object.entries(params.taxonomies)) {
-      query[`taxonomies.${key}`] = value;
-    }
-  }
 
   // Drop null/undefined values to avoid noisy query strings
   const filteredQuery: Record<string, any> = {};
@@ -46,11 +35,8 @@ function buildQuery(params: PerformersQuery): Record<string, any> {
 }
 
 const inputSchema = {
-  q: z.string().optional().describe('Free-text search'),
-  id: z.number().optional().describe('Specific performer id'),
-  slug: z.string().optional().describe('Performer slug'),
-  type: z.string().optional().describe('Performer type (e.g., music, theater)'),
-  taxonomies: z.record(z.string()).optional().describe('Key-value filters for taxonomy fields, sent as taxonomies.{key}=value'),
+  q: z.string().optional().describe('Free-text search that should be used if no other filters are matched and/or provided'),
+  slug: z.string().optional().describe('The slug of the performer to filter events by, e.g., "the-weeknd"'),
   per_page: z.number().min(1).max(50).default(10),
   page: z.number().min(1).default(1),
   sort: z.string().optional(),
@@ -63,7 +49,7 @@ const inputSchema = {
  */
 export const listPerformersTool = {
   name: 'seatgeek_performers',
-  description: 'List SeatGeek performers with simple filters (q, id, slug, type). Returns structured models or raw JSON with format="json".',
+  description: 'List performers that are hosting an event (slug for performer query). Map performer to the artist\'s name (not the tour). Returns structured models or raw JSON with format="json".',
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
     // Validate input

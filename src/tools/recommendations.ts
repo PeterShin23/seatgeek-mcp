@@ -13,7 +13,7 @@ const RecommendationsQuerySchema = z.object({
   range: z.string().nullable().optional().describe('Range for location-based recommendations (e.g., "50mi")'),
   per_page: z.number().min(1).max(50).default(10),
   page: z.number().min(1).default(1),
-  format: z.enum(['structured', 'json']).default('structured'),
+  format: z.enum(['structured', 'json']).default('structured').describe('Always use "structured" unless the user explicitly requests raw JSON. This is for output formatting, not for API parsing.'),
 });
 
 type RecommendationsQuery = z.infer<typeof RecommendationsQuerySchema>;
@@ -69,7 +69,7 @@ type Recommendation = z.infer<typeof RecommendationSchema>;
  */
 export const recommendationsTool = {
   name: 'seatgeek_recommendations',
-  description: 'Get recommended events based on seed parameters (performer, event, location). Returns structured models or raw JSON with format="json".',
+  description: 'Get recommended events based on seed parameters (performer, event, location). Map performer to the artist\'s name (not the tour). Returns structured models or raw JSON with format="json".',
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
     // Validate input

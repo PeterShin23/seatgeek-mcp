@@ -6,11 +6,9 @@ const SectionInfoSchema = z.object({
   sections: z.record(z.array(z.string())).nullable(),
 });
 
-type SectionInfo = z.infer<typeof SectionInfoSchema>;
-
 const inputSchema = {
   eventId: z.number().describe('The ID of the event to get section information for'),
-  format: z.enum(['structured', 'json']).default('structured'),
+  format: z.enum(['structured', 'json']).default('structured').describe('Always use "structured" unless the user explicitly requests raw JSON. This is for output formatting, not for API parsing.'),
 };
 
 /**
@@ -22,10 +20,10 @@ export const sectionInfoTool = {
   description: 'Get section and row information for a specific event. Returns detailed information about the sections and rows available for a specific event.',
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
-    // Validate input
+    // Validate input with more flexible parsing
     const params = z.object({
       eventId: z.number(),
-      format: z.enum(['structured', 'json']).default('structured'),
+      format: z.enum(['structured', 'json']).default('structured').optional(),
     }).parse(args);
     
     // Build URL with event ID
