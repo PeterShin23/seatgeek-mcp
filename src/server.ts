@@ -24,8 +24,8 @@ const mcpServer = new McpServer({
 mcpServer.tool('list_events', listEventsTool.description, listEventsTool.inputSchema, listEventsTool.handler);
 mcpServer.tool('list_performers', listPerformersTool.description, listPerformersTool.inputSchema, listPerformersTool.handler);
 mcpServer.tool('list_venues', listVenuesTool.description, listVenuesTool.inputSchema, listVenuesTool.handler);
-mcpServer.tool('get_event_sections_info', sectionInfoTool.description, sectionInfoTool.inputSchema, sectionInfoTool.handler);
-mcpServer.tool('list_event_recommendations', recommendationsTool.description, recommendationsTool.inputSchema, recommendationsTool.handler);
+mcpServer.tool('get_event_sections', sectionInfoTool.description, sectionInfoTool.inputSchema, sectionInfoTool.handler);
+mcpServer.tool('get_recommendations', recommendationsTool.description, recommendationsTool.inputSchema, recommendationsTool.handler);
 
 // Start server
 async function startServer() {

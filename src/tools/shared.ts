@@ -1,7 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import dotenv from 'dotenv';
 
-// Load environment variables
 dotenv.config();
 
 // Base API and endpoints
@@ -18,17 +17,10 @@ const MAX_RETRIES = 2;
 const DEFAULT_HEADERS = { "User-Agent": "seatgeek-mcp/0.1 (+mcp)" };
 
 /**
- * Inject SEATGEEK_CLIENT_ID into query if present in env.
+ * Get SEATGEEK_CLIENT_ID from env if present.
  */
-export function withClientId(query: Record<string, any>): Record<string, any> {
-  const clientId = process.env.SEATGEEK_CLIENT_ID;
-  if (clientId) {
-    // copy to avoid mutating the caller
-    const updated = { ...query };
-    updated["client_id"] = clientId;
-    return updated;
-  }
-  return query;
+export function getClientId(): string | undefined {
+  return process.env.SEATGEEK_CLIENT_ID;
 }
 
 /**
@@ -37,12 +29,21 @@ export function withClientId(query: Record<string, any>): Record<string, any> {
 export async function fetchJson(url: string, query: Record<string, any>): Promise<any> {
   let backoffMs = 500;
   
+  const clientId = getClientId();
+  
+  const headers: Record<string, string> = { ...DEFAULT_HEADERS };
+  
+  // Add basic auth if client ID is present
+  if (clientId) {
+    headers["Authorization"] = `Basic ${Buffer.from(clientId + ":").toString("base64")}`;
+  }
+  
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       const response = await axios.get(url, {
         params: query,
         timeout: DEFAULT_TIMEOUT_MS,
-        headers: DEFAULT_HEADERS,
+        headers: headers,
       });
       
       return response.data;

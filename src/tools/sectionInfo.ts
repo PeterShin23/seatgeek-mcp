@@ -1,14 +1,13 @@
 import { z } from 'zod';
-import { withClientId, fetchJson, SECTION_INFO_ENDPOINT } from './shared.js';
+import { fetchJson, SECTION_INFO_ENDPOINT } from './shared.js';
 
-// Section info response schema
 const SectionInfoSchema = z.object({
   sections: z.record(z.array(z.string())).nullable(),
 });
 
 const inputSchema = {
-  eventId: z.number().describe('The ID of the event to get section information for'),
-  format: z.enum(['structured', 'json']).default('structured').describe('Always use "structured" unless the user explicitly requests raw JSON. This is for output formatting, not for API parsing.'),
+  eventId: z.number().describe('The unique ID of the event to get detailed section and seating information for. This should be a valid event ID from the SeatGeek API.'),
+  format: z.enum(['structured', 'json']).default('structured').describe('Output format. Use "structured" for readable format (default) or "json" for raw API response. Only use "json" if explicitly requested.'),
 };
 
 /**
@@ -16,58 +15,76 @@ const inputSchema = {
  * Returns detailed information about the sections and rows available for a specific event.
  */
 export const sectionInfoTool = {
-  name: 'seatgeek_event_sections',
-  description: 'Get section and row information for a specific event. Returns detailed information about the sections and rows available for a specific event.',
+  name: 'get_event_sections',
+  description: 'Get detailed seating information including sections and rows for a specific event. Use this tool to understand the venue layout, available seating sections, and row information for ticket purchasing decisions. Requires a valid event ID from the SeatGeek API.',
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
-    // Validate input with more flexible parsing
-    const params = z.object({
-      eventId: z.number(),
-      format: z.enum(['structured', 'json']).default('structured').optional(),
-    }).parse(args);
-    
-    // Build URL with event ID
-    const url = `${SECTION_INFO_ENDPOINT}/${params.eventId}`;
-    
-    // Build query
-    const query = withClientId({});
-    
-    // Fetch data
-    const data = await fetchJson(url, query);
-    
-    // Return raw JSON if requested
-    if (params.format === 'json') {
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: JSON.stringify(data, null, 2)
-          }
-        ]
-      };
-    }
-    
-    // Process structured data
     try {
-      const sectionInfo = SectionInfoSchema.parse(data);
+      const params = z.object({
+        eventId: z.number(),
+        format: z.enum(['structured', 'json']).default('structured').optional(),
+      }).parse(args);
       
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: JSON.stringify(sectionInfo, null, 2)
-          }
-        ]
-      };
+      const url = `${SECTION_INFO_ENDPOINT}/${params.eventId}`;
+      const data = await fetchJson(url, {});
+      
+      if (params.format === 'json') {
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify(data, null, 2)
+            }
+          ]
+        };
+      }
+      
+      try {
+        const sectionInfo = SectionInfoSchema.parse(data);
+        
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify(sectionInfo, null, 2)
+            }
+          ]
+        };
+      } catch (error) {
+        // Return raw data if parsing fails
+        console.warn('Failed to parse section info:', error);
+        
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify(data, null, 2)
+            }
+          ]
+        };
+      }
     } catch (error) {
-      // Return raw data if parsing fails
-      console.warn('Failed to parse section info:', error);
+      console.error('Error in get_event_sections handler:', error);
+      
+      // Provide more detailed error information
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorDetails = {
+        error: 'API_REQUEST_FAILED',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+        endpoint: SECTION_INFO_ENDPOINT,
+        args: args
+      };
       
       return {
         content: [
           {
             type: 'text' as const,
-            text: JSON.stringify(data, null, 2)
+            text: JSON.stringify({
+              error: 'Failed to fetch section information',
+              details: errorDetails,
+              suggestion: 'Please check your parameters and try again. Common issues include invalid event IDs or the event not having section information available.'
+            }, null, 2)
           }
         ]
       };
