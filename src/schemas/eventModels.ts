@@ -3,9 +3,9 @@ import { z } from 'zod';
 // Image set schema
 export const ImageSetSchema = z.object({
   huge: z.string().nullable(),
-  large: z.string().nullable(),
-  medium: z.string().nullable(),
-  small: z.string().nullable(),
+  large: z.string().nullable().optional(),
+  medium: z.string().nullable().optional(),
+  small: z.string().nullable().optional(),
 });
 
 // Performer schema
@@ -18,7 +18,7 @@ export const PerformerSchema = z.object({
   url: z.string().nullable(),
   image: z.string().nullable(),
   images: ImageSetSchema.nullable(),
-  primary: z.boolean().nullable(),
+  primary: z.boolean().nullable().optional(),
   score: z.number().nullable(),
 });
 
@@ -47,7 +47,7 @@ export const VenueSchema = z.object({
 export const TaxonomySchema = z.object({
   id: z.number(),
   name: z.string().nullable(),
-  parent_id: z.string().nullable(),
+  parent_id: z.union([z.string(), z.number()]).nullable(),
 });
 
 // Integrated schema
@@ -70,12 +70,12 @@ export const EventSchema = z.object({
   datetime_tbd: z.boolean().nullable(),
   date_tbd: z.boolean().nullable(),
   time_tbd: z.boolean().nullable(),
-  visible_until: z.string().nullable(),
+  visible_until: z.string().nullable().optional(),
   performers: z.array(PerformerSchema).nullable(),
   venue: VenueSchema.nullable(),
   taxonomies: z.array(TaxonomySchema).nullable(),
   integrated: IntegratedSchema.nullable(),
-  venue_display: z.string().nullable(),
+  venue_display: z.string().nullable().optional(),
 });
 
 // Type exports

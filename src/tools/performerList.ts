@@ -23,7 +23,7 @@ function buildQuery(params: PerformersQuery): Record<string, any> {
     id: params.id,
     slug: params.slug,
     type: params.type,
-    per_page: params.per_page,
+    per_page: Math.min(params.per_page, 50),
     page: params.page,
     sort: params.sort,
   };

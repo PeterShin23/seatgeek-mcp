@@ -26,7 +26,7 @@ function buildQuery(params: VenuesQuery): Record<string, any> {
     "postal_code": params.postal_code,
     q: params.q,
     id: params.id,
-    per_page: params.per_page,
+    per_page: Math.min(params.per_page, 50),
     page: params.page,
     sort: params.sort,
   };

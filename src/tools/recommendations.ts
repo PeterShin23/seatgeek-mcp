@@ -27,7 +27,7 @@ function buildQuery(params: RecommendationsQuery): Record<string, any> {
     "lon": params.lon,
     "postal_code": params.postal_code,
     "range": params.range,
-    per_page: params.per_page,
+    per_page: Math.min(params.per_page, 50),
     page: params.page,
   };
 
@@ -57,7 +57,7 @@ const inputSchema = {
 
 // Recommendation response schema
 const RecommendationSchema = z.object({
-  performer: PerformerSchema,
+  event: z.any(), // For now, we'll use any type for the event object
   score: z.number(),
 });
 

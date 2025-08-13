@@ -106,3 +106,51 @@ You can test the server in several ways:
    ```
 
 The server implements the Model Context Protocol (MCP) specification, so it can be used with any MCP-compatible client.
+
+## Using with OpenWebUI
+
+You can use this MCP server with OpenWebUI through the mcpo (MCP Over HTTP) proxy, which automatically generates OpenAPI documentation from your MCP tool schemas.
+
+### Prerequisites
+
+- Docker installed on your system (Optional if using uv)
+- OpenWebUI installed and running
+
+### Setup Instructions
+
+1. **Start the mcpo proxy**:
+   ```bash
+   docker run -p 8000:8000 -v $(pwd):/workspace -w /workspace ghcr.io/open-webui/mcpo:main -- npm start
+   ```
+
+   or
+
+   ```bash
+   uvx mcpo --port 8000 -- npm start
+   ```
+
+2. **Verify the proxy is running**:
+   - Open your browser and navigate to `http://localhost:8000/docs` to see the automatically generated Swagger UI documentation
+   - You can also check the OpenAPI specification at `http://localhost:8000/openapi.json`
+
+3. **Connect to OpenWebUI**:
+   - Open OpenWebUI
+   - Go to Settings > Tools & Integrations
+   - Add a new OpenAPI-compatible tool
+   - Use the URL: `http://localhost:8000`
+   - The available endpoints will be:
+     - `/list_events` (POST) - Search for events
+     - `/list_performers` (POST) - Search for performers
+     - `/list_venues` (POST) - Search for venues
+     - `/get_event_sections_info` (POST) - Get section info for an event
+     - `/list_event_recommendations` (POST) - Get event recommendations
+
+### Example Usage in OpenWebUI
+
+Once connected, you can use these tools in OpenWebUI by making requests with JSON payloads:
+
+- To search for concerts: `{"q": "concert", "per_page": 5}`
+- To search for performers: `{"q": "band", "per_page": 5}`
+- To search for venues: `{"city": "New York", "per_page": 5}`
+
+The mcpo proxy automatically handles the conversion between the OpenAPI REST interface and the MCP protocol, making your MCP tools accessible through standard REST endpoints that OpenWebUI can easily integrate with.

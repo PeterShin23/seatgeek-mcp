@@ -34,7 +34,7 @@ function buildQuery(params: EventsQuery): Record<string, any> {
     "venue.city": params.venue_city,
     "venue.state": params.venue_state,
     "venue.country": params.venue_country,
-    per_page: params.per_page,
+    per_page: Math.min(params.per_page, 50),
     page: params.page,
     sort: params.sort,
   };
