@@ -14,7 +14,8 @@
     "start": "node dist/server.js",
     "clean": "rm -rf dist",
     "test-tools": "node test/test-tools.js",
-    "test-server": "node test/test-server.js"
+    "test-server": "node test/test-server.js",
+    "test-examples": "node test/test-examples.js"
   },
   "keywords": [
     "mcp",

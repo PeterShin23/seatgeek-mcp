@@ -87,14 +87,40 @@ You can test the server in several ways:
    MCP_HTTP=1 PORT=8080 npm start
    ```
 
-2. **Using curl to test tools:**
+2. **Using curl to test tools (proper MCP protocol sequence):**
+   
+   The MCP protocol requires a specific sequence of requests with proper headers:
+   
+   a. **Initialize the connection** (required first step):
+   ```bash
+   curl -v -X POST http://localhost:8080 \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json, text/event-stream" \
+     -d '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-06-11", "capabilities": {}, "clientInfo": {"name": "curl", "version": "1.0.0"}}}'
+   ```
+   
+   b. **Extract the session ID** from the response headers (look for `mcp-session-id`)
+   
+   c. **Use the session ID for subsequent requests**:
    ```bash
    # List available tools
-   curl -X POST http://localhost:8080 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}'
+   curl -X POST http://localhost:8080 \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json, text/event-stream" \
+     -H "Mcp-Session-Id: YOUR_SESSION_ID_HERE" \
+     -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}'
    
    # Call a specific tool (example)
-   curl -X POST http://localhost:8080 -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "list_events", "arguments": {"q": "concert", "per_page": 5}}}'
+   curl -X POST http://localhost:8080 \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json, text/event-stream" \
+     -H "Mcp-Session-Id: YOUR_SESSION_ID_HERE" \
+     -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "list_events", "arguments": {"q": "concert", "per_page": 5}}}'
    ```
+
+   For a complete working example, see:
+- [examples/curl-example.sh](examples/curl-example.sh) - Shell script demonstrating the full sequence of requests
+- [examples/node-example.js](examples/node-example.js) - Node.js script showing programmatic usage
 
 3. **Using the test scripts:**
    ```bash
@@ -147,10 +173,9 @@ You can use this MCP server with OpenWebUI through the mcpo (MCP Over HTTP) prox
 
 ### Example Usage in OpenWebUI
 
-Once connected, you can use these tools in OpenWebUI by making requests with JSON payloads:
+Once connected, you can use these tools in OpenWebUI that will make requests such as:
 
-- To search for concerts: `{"q": "concert", "per_page": 5}`
-- To search for performers: `{"q": "band", "per_page": 5}`
+- To search for performers: `{"q": "washington nationals", "per_page": 5}`
 - To search for venues: `{"city": "New York", "per_page": 5}`
 
 The mcpo proxy automatically handles the conversion between the OpenAPI REST interface and the MCP protocol, making your MCP tools accessible through standard REST endpoints that OpenWebUI can easily integrate with.
