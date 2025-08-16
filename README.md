@@ -133,6 +133,24 @@ You can test the server in several ways:
 
 The server implements the Model Context Protocol (MCP) specification, so it can be used with any MCP-compatible client.
 
+## Using with Claude Desktop
+
+### Prerequisites
+- Installed Claude Desktop
+- Added claude_desktop_config.json under Settings -> Developer
+
+### Setup Instructions
+- Add to `mcpServers` list:
+```json
+"seatgeek-mcp": {
+   "command": "node",
+   "args": ["/path-to/seatgeek-mcp/dist/server.js"],
+   "env": {
+      "SEATGEEK_CLIENT_ID": "your-client-id"
+   }
+}
+```
+
 ## Using with OpenWebUI
 
 You can use this MCP server with OpenWebUI through the mcpo (MCP Over HTTP) proxy, which automatically generates OpenAPI documentation from your MCP tool schemas.

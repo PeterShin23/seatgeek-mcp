@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { PerformerSchema, Performer } from '../schemas/eventModels.js';
-import { fetchJson, RECOMMENDATIONS_ENDPOINT } from './shared.js';
+import { fetchJson, RECOMMENDATIONS_ENDPOINT, PERFORMERS_ENDPOINT } from './shared.js';
 
 const RecommendationsQuerySchema = z.object({
+  q: z.string().nullable().optional(),
   performer_id: z.number().nullable().optional(),
   event_id: z.number().nullable().optional(),
   geoip: z.boolean().nullable().optional(),
@@ -42,6 +43,7 @@ function buildQuery(params: RecommendationsQuery): Record<string, any> {
 }
 
 const inputSchema = {
+  q: z.string().optional().describe('Performer name to seed recommendations based on similar artists or events. If provided, the system will look up the performer ID automatically.'),
   performer_id: z.number().optional().describe('Performer ID to seed recommendations based on similar artists or events.'),
   event_id: z.number().optional().describe('Event ID to seed recommendations based on similar events or performers.'),
   geoip: z.boolean().optional().describe('Use IP geolocation to provide recommendations for events near the user.'),
@@ -71,7 +73,33 @@ export const recommendationsTool = {
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
     try {
-      const params = RecommendationsQuerySchema.parse(args);
+      let params = RecommendationsQuerySchema.parse(args);
+      
+      // If we have a q parameter but no performer_id, try to look up the ID first
+      if (params.q && !params.performer_id) {
+        try {
+          // Search for the performer using the q parameter
+          const performerQuery = {
+            q: params.q,
+            per_page: 1
+          };
+          
+          const performerData = await fetchJson(PERFORMERS_ENDPOINT, performerQuery);
+          const performers = performerData.performers || [];
+          
+          // If we found a performer, use their ID
+          if (performers.length > 0 && performers[0].id) {
+            params = {
+              ...params,
+              performer_id: performers[0].id
+            };
+          }
+        } catch (error) {
+          // If performer lookup fails, continue with original query
+          console.warn('Failed to lookup performer ID, continuing with original query:', error);
+        }
+      }
+      
       const query = buildQuery(params);
       const data = await fetchJson(RECOMMENDATIONS_ENDPOINT, query);
       

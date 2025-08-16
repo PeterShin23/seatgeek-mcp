@@ -25,8 +25,7 @@ export const sectionInfoTool = {
         format: z.enum(['structured', 'json']).default('structured').optional(),
       }).parse(args);
       
-      const url = `${SECTION_INFO_ENDPOINT}/${params.eventId}`;
-      const data = await fetchJson(url, {});
+      const data = await fetchJson(SECTION_INFO_ENDPOINT, { event_id: params.eventId });
       
       if (params.format === 'json') {
         return {

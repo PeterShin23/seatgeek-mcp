@@ -7,6 +7,9 @@ import { listPerformersTool } from './tools/performerList.js';
 import { listVenuesTool } from './tools/venueList.js';
 import { sectionInfoTool } from './tools/sectionInfo.js';
 import { recommendationsTool } from './tools/recommendations.js';
+import { performerRecommendationsTool, eventRecommendationsTool, performerEventsTool } from './tools/specificRecommendations.js';
+import { findEventsTool } from './tools/findEvents.js';
+import { findEventRecommendationsTool } from './tools/findEventRecommendations.js';
 import { createServer } from 'http';
 import { randomUUID } from 'crypto';
 import { systemInstructions } from './prompts/index.js';
@@ -21,11 +24,16 @@ const mcpServer = new McpServer({
 });
 
 // Register tools
-mcpServer.tool('list_events', listEventsTool.description, listEventsTool.inputSchema, listEventsTool.handler);
-mcpServer.tool('list_performers', listPerformersTool.description, listPerformersTool.inputSchema, listPerformersTool.handler);
-mcpServer.tool('list_venues', listVenuesTool.description, listVenuesTool.inputSchema, listVenuesTool.handler);
-mcpServer.tool('get_event_sections', sectionInfoTool.description, sectionInfoTool.inputSchema, sectionInfoTool.handler);
-mcpServer.tool('get_recommendations', recommendationsTool.description, recommendationsTool.inputSchema, recommendationsTool.handler);
+// mcpServer.tool('list_events', listEventsTool.description, listEventsTool.inputSchema, listEventsTool.handler);
+// mcpServer.tool('list_performers', listPerformersTool.description, listPerformersTool.inputSchema, listPerformersTool.handler);
+// mcpServer.tool('list_venues', listVenuesTool.description, listVenuesTool.inputSchema, listVenuesTool.handler);
+// mcpServer.tool('get_event_sections', sectionInfoTool.description, sectionInfoTool.inputSchema, sectionInfoTool.handler);
+// mcpServer.tool('get_recommendations', recommendationsTool.description, recommendationsTool.inputSchema, recommendationsTool.handler);
+// mcpServer.tool('get_performer_recommendations', performerRecommendationsTool.description, performerRecommendationsTool.inputSchema, performerRecommendationsTool.handler);
+// mcpServer.tool('get_event_recommendations', eventRecommendationsTool.description, eventRecommendationsTool.inputSchema, eventRecommendationsTool.handler);
+// mcpServer.tool('get_performer_events', performerEventsTool.description, performerEventsTool.inputSchema, performerEventsTool.handler);
+mcpServer.tool(findEventsTool.name, findEventsTool.description, findEventsTool.inputSchema, findEventsTool.handler);
+mcpServer.tool(findEventRecommendationsTool.name, findEventRecommendationsTool.description, findEventRecommendationsTool.inputSchema, findEventRecommendationsTool.handler);
 
 // Start server
 async function startServer() {
@@ -63,12 +71,12 @@ async function startServer() {
     
     // Start the HTTP server
     server.listen(port, () => {
-      console.log(`SeatGeek MCP server running over HTTP on port ${port}`);
+      console.error(`SeatGeek MCP server running over HTTP on port ${port}`);
     });
     
     // Handle server shutdown
     process.on('SIGINT', async () => {
-      console.log('Shutting down HTTP server...');
+      console.error('Shutting down HTTP server...');
       server.close();
       await mcpServer.close();
       process.exit(0);
@@ -76,21 +84,21 @@ async function startServer() {
   } else {
     const transport = new StdioServerTransport();
     await mcpServer.connect(transport);
-    console.log('SeatGeek MCP server running over stdio');
+    console.error('SeatGeek MCP server running over stdio');
   }
 }
 
 // Handle graceful shutdown for stdio mode
 process.on('SIGINT', async () => {
   if (!process.env.MCP_HTTP) {
-    console.log('Shutting down SeatGeek MCP server...');
+    console.error('Shutting down SeatGeek MCP server...');
     await mcpServer.close();
     process.exit(0);
   }
 });
 
 process.on('SIGTERM', async () => {
-  console.log('Shutting down SeatGeek MCP server...');
+  console.error('Shutting down SeatGeek MCP server...');
   await mcpServer.close();
   process.exit(0);
 });

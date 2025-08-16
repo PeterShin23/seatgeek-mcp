@@ -99,7 +99,7 @@ export const listVenuesTool = {
       const query = buildQuery(params);
       
       // Log the query for debugging
-      console.log('SeatGeek API Query:', JSON.stringify(query, null, 2));
+      console.error('SeatGeek API Query:', JSON.stringify(query, null, 2));
       
       // Fetch data
       const data = await fetchJson(VENUES_ENDPOINT, query);
@@ -131,7 +131,7 @@ export const listVenuesTool = {
         }
       }
       
-      console.log(`Successfully processed ${results.length} venues`);
+      console.error(`Successfully processed ${results.length} venues`);
       
       return {
         content: [

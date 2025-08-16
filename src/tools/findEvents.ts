@@ -1,12 +1,10 @@
 import { z } from 'zod';
 import { EventSchema, Event } from '../schemas/eventModels.js';
-import { EVENTS_ENDPOINT, fetchJson } from './shared.js';
-import { PERFORMERS_ENDPOINT } from './shared.js';
+import { EVENTS_ENDPOINT, PERFORMERS_ENDPOINT, fetchJson } from './shared.js';
 
 // Events query schema
 const EventsQuerySchema = z.object({
   q: z.string().nullable().optional(),
-  performer_slug: z.string().nullable().optional(),
   venue_city: z.string().nullable().optional(),
   venue_state: z.string().nullable().optional(),
   venue_country: z.string().nullable().optional(),
@@ -14,24 +12,25 @@ const EventsQuerySchema = z.object({
   end_utc: z.string().nullable().optional(),
   per_page: z.number().min(1).max(50).default(10),
   page: z.number().min(1).default(1),
-  sort: z.string().nullable().optional(),
   format: z.enum(['structured', 'json']).default('structured'),
 });
 
 type EventsQuery = z.infer<typeof EventsQuerySchema>;
 
-function buildQuery(params: EventsQuery): Record<string, any> {
+function buildQuery(params: EventsQuery, performerSlug?: string): Record<string, any> {
   const query: Record<string, any> = {
-    q: params.q,
     per_page: Math.min(params.per_page, 50),
     page: params.page,
-    sort: params.sort,
   };
 
-  // Handle performer slug - API expects "performers.slug" format
-  if (params.performer_slug) {
-    query["performers.slug"] = params.performer_slug;
+  // If we have a performer slug, use it instead of the general q parameter
+  // and don't include venue information as requested
+  if (performerSlug) {
+    query["performers.slug"] = performerSlug;
   } else {
+    // Use general q parameter and include venue information
+    query.q = params.q;
+    
     // Handle venue location - API expects flat format
     if (params.venue_city) {
       query["venue.city"] = params.venue_city;
@@ -64,8 +63,7 @@ function buildQuery(params: EventsQuery): Record<string, any> {
 }
 
 const inputSchema = {
-  q: z.string().optional().describe('Free-text search term. Use only when no other specific filters match the user request. Never duplicate information already captured in other parameters.'),
-  performer_slug: z.string().optional().describe('The slug of the performer to filter events by. Use artist name (not tour name), e.g., "the-weeknd" or "taylor-swift". When provided, venue parameters (city, state, country) are ignored as venue details are automatically inferred from the performer.'),
+  q: z.string().optional().describe('Free-text search term. Use only when no other specific filters match the user request. Keep this text to pronouns if present in the user\'s query unless there are no pronouns in the query. Never duplicate information already captured in other parameters.'),
   venue_city: z.string().optional().describe('City name where the venue is located. Use full city name, e.g., "New York" or "Los Angeles".'),
   venue_state: z.string().optional().describe('State abbreviation where the venue is located, e.g., "CA" for California or "NY" for New York.'),
   venue_country: z.string().optional().describe('Country code where the venue is located, e.g., "US" for United States or "CA" for Canada.'),
@@ -73,50 +71,64 @@ const inputSchema = {
   end_utc: z.string().optional().describe('End date filter in ISO8601 UTC format (YYYY-MM-DD). Use with start_utc to define date ranges.'),
   per_page: z.number().min(1).max(50).default(10).describe('Number of results to return per page (1-50). Default is 10.'),
   page: z.number().min(1).default(1).describe('Page number for pagination. Default is 1.'),
-  sort: z.string().optional().describe('Sort order for results. Common values: "date" (by event date), "score" (relevance), "popularity".'),
   format: z.enum(['structured', 'json']).default('structured').describe('Output format. Use "structured" for readable format (default) or "json" for raw API response. Only use "json" if explicitly requested.'),
 };
 
 /**
- * List SeatGeek events with simple filters (q, performer, venue, time, type).
- * Returns structured models or raw JSON with format='json'.
+ * Find events based on search criteria.
+ * 
+ * If the user's query involves a performer, first use GET /performers with the q parameter.
+ * Then use the performer slug from the response to make a GET /events call.
+ * 
+ * If it does not involve a performer, simply use the q parameter on GET /events.
+ * 
+ * Returns a list of events matching the search criteria, including event details, venue information, and performer details.
  */
-export const listEventsTool = {
-  name: 'list_events',
-  description: 'Search for events by performer, location, date, or venue. This is the primary tool for finding concerts, sports, theater, and other events. Use performer_slug for specific artists (venue details will be automatically inferred), or use venue_city/state/country for location-based searches. When both performer and location are specified, prefer performer+city unless the venue is unique. Returns structured event data with venue information.',
+export const findEventsTool = {
+  name: 'find_events',
+  description: 'Search for events by performer, location, date, or venue. This tool is optimized for finding specific events based on user queries. If the query involves a performer, it first looks up the performer, then finds events for that performer. Otherwise, it searches events directly. Returns structured event data with venue information.',
   inputSchema: inputSchema,
   handler: async (args: any, extra: any) => {
-    let params = EventsQuerySchema.parse(args);
+    const params = EventsQuerySchema.parse(args);
     
-    // If we have a q parameter but no performer_slug, try to look up the slug first
-    if (params.q && !params.performer_slug) {
-      try {
-        // Search for the performer using the q parameter
-        const performerQuery = {
-          q: params.q,
-          per_page: 1
-        };
-        
-        const performerData = await fetchJson(PERFORMERS_ENDPOINT, performerQuery);
-        const performers = performerData.performers || [];
-        
-        // If we found a performer, use their slug
-        if (performers.length > 0 && performers[0].slug) {
-          params = {
-            ...params,
-            performer_slug: performers[0].slug
-          };
-        }
-      } catch (error) {
-        // If performer lookup fails, continue with original query
-        console.warn('Failed to lookup performer slug, continuing with original query:', error);
-      }
-    }
-    
-    const query = buildQuery(params);
-
     try {
-      const data = await fetchJson(EVENTS_ENDPOINT, query);
+      let data: any;
+      
+      // If we have a query parameter, first check if it's a performer
+      if (params.q) {
+        try {
+          // First try to find a performer with the query
+          const performerQuery = {
+            q: params.q,
+            per_page: params.per_page,
+            page: 1,
+          };
+          
+          const performerData = await fetchJson(PERFORMERS_ENDPOINT, performerQuery);
+          const performers = performerData.performers || [];
+          
+          // If we found a performer, use their slug to search for events
+          if (performers.length > 0 && performers[0].slug) {
+            // Build a new query using the performer slug
+            // Note: When using performer slug, we don't include venue information as requested
+            const query = buildQuery(params, performers[0].slug);
+            data = await fetchJson(EVENTS_ENDPOINT, query);
+          } else {
+            // If no performer found, search events directly with the q parameter
+            const query = buildQuery(params);
+            data = await fetchJson(EVENTS_ENDPOINT, query);
+          }
+        } catch (error) {
+          // If performer lookup fails, fall back to direct event search
+          console.warn('Failed to lookup performer, falling back to direct event search:', error);
+          const query = buildQuery(params);
+          data = await fetchJson(EVENTS_ENDPOINT, query);
+        }
+      } else {
+        // If no q parameter, search events directly
+        const query = buildQuery(params);
+        data = await fetchJson(EVENTS_ENDPOINT, query);
+      }
       
       if (params.format === 'json') {
         return {
@@ -164,7 +176,7 @@ export const listEventsTool = {
         ]
       };
     } catch (error) {
-      console.error('Error in list_events handler:', error);
+      console.error('Error in find_events handler:', error);
       
       // Provide more detailed error information
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -173,7 +185,6 @@ export const listEventsTool = {
         message: errorMessage,
         timestamp: new Date().toISOString(),
         endpoint: EVENTS_ENDPOINT,
-        query: query,
         args: args
       };
       
@@ -184,7 +195,7 @@ export const listEventsTool = {
             text: JSON.stringify({
               error: 'Failed to fetch events',
               details: errorDetails,
-              suggestion: 'Please check your parameters and try again. Common issues include invalid performer slugs or venue codes.'
+              suggestion: 'Please check your parameters and try again. Common issues include invalid search terms or venue codes.'
             }, null, 2)
           }
         ]
