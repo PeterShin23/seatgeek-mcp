@@ -2,6 +2,10 @@
 
 Comprehensive MCP server exposing a registry of SeatGeek tools including events, performers, venues, section info, and recommendations as a TypeScript library.
 
+<a href="https://glama.ai/mcp/servers/@PeterShin23/seatgeek-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@PeterShin23/seatgeek-mcp/badge" alt="SeatGeek Server MCP server" />
+</a>
+
 ## Demo
 ![seatgeek-mcp-demo](https://github.com/user-attachments/assets/699c41da-9d12-48d0-b413-c532c1397cad)
 
