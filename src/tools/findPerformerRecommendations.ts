@@ -104,9 +104,11 @@ export const findPerformerRecommendationsTool = {
           
           // Add performer lookup promise if performer_q is provided
           if (params.performer_q) {
-            const performerPromise = searchPerformers(params.performer_q, 10, 1).then(performers => {
-              if (performers.length > 0 && performers[0].id) {
-                performerIds.push(performers[0].id);
+            const performerPromise = searchPerformers(params.performer_q, params.per_page, 1).then(performers => {
+              if (performers.length > 0) {
+                // Get unique performer IDs
+                const uniqueIds = [...new Set(performers.map((p: any) => p.id).filter(Boolean))] as number[];
+                performerIds.push(...uniqueIds);
               }
             });
             promises.push(performerPromise);
@@ -136,9 +138,11 @@ export const findPerformerRecommendationsTool = {
               additionalParams["datetime_utc.lte"] = params.end_utc;
             }
             
-            const eventPromise = searchEvents(params.event_q, 10, additionalParams).then(events => {
-              if (events.length > 0 && events[0].id) {
-                eventIds.push(events[0].id);
+            const eventPromise = searchEvents(params.event_q, params.per_page, additionalParams).then(events => {
+              if (events.length > 0) {
+                // Get unique event IDs
+                const uniqueIds = [...new Set(events.map((e: any) => e.id).filter(Boolean))] as number[];
+                eventIds.push(...uniqueIds);
               }
             });
             promises.push(eventPromise);

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { EventSchema, Event } from '../schemas/eventModels.js';
 import { fetchJson } from '../shared/core.js';
 import { EVENTS_ENDPOINT, PERFORMERS_ENDPOINT, searchPerformers } from '../shared/endpoints.js';
+import { CondensedEvent, condenseEventData } from '../shared/helpers.js';
 
 // Events query schema
 const EventsQuerySchema = z.object({
@@ -98,15 +99,46 @@ export const findEventsTool = {
       // If we have a query parameter, first check if it's a performer
       if (params.q) {
         try {
-          // First try to find a performer with the query
+          // First try to find performers with the query
           const performers = await searchPerformers(params.q, params.per_page, 1);
           
-          // If we found a performer, use their slug to search for events
-          if (performers.length > 0 && performers[0].slug) {
-            // Build a new query using the performer slug
-            // Note: When using performer slug, we don't include venue information as requested
-            const query = buildQuery(params, performers[0].slug);
-            data = await fetchJson(EVENTS_ENDPOINT, query);
+          // If we found performers, aggregate unique performer slugs and make Promise.all query
+          if (performers.length > 0) {
+            // Get unique performer slugs
+            const uniqueSlugs = [...new Set(performers.map((p: any) => p.slug).filter(Boolean))] as string[];
+            
+            if (uniqueSlugs.length > 0) {
+              // Create promises for each unique performer slug
+              const promises = uniqueSlugs.map(slug => {
+                const query = buildQuery(params, slug);
+                return fetchJson(EVENTS_ENDPOINT, query);
+              });
+              
+              // Execute all promises
+              const results = await Promise.all(promises);
+              
+              // Merge events from all results
+              data = { events: [] };
+              for (const result of results) {
+                if (result.events && Array.isArray(result.events)) {
+                  data.events = data.events.concat(result.events);
+                }
+              }
+              
+              // Remove duplicates based on event id
+              const eventIds = new Set();
+              data.events = data.events.filter((event: any) => {
+                if (eventIds.has(event.id)) {
+                  return false;
+                }
+                eventIds.add(event.id);
+                return true;
+              });
+            } else {
+              // If no valid slugs found, search events directly with the q parameter
+              const query = buildQuery(params);
+              data = await fetchJson(EVENTS_ENDPOINT, query);
+            }
           } else {
             // If no performer found, search events directly with the q parameter
             const query = buildQuery(params);
@@ -136,25 +168,13 @@ export const findEventsTool = {
       }
       
       const eventsRaw = data.events || [];
-      const results: Event[] = [];
+      const results: CondensedEvent[] = [];
       
       for (const item of eventsRaw) {
         try {
-          const event = EventSchema.parse(item);
-          // Add venue display if venue exists
-          if (event.venue) {
-            const city = event.venue.city;
-            const state = event.venue.state;
-            const parts = [city, state].filter(Boolean);
-            const venueDisplay = parts.join(', ') || null;
-            
-            results.push({
-              ...event,
-              venue_display: venueDisplay,
-            });
-          } else {
-            results.push(event);
-          }
+          // Condense the event data
+          const condensedEvent = condenseEventData(item);
+          results.push(condensedEvent);
         } catch (error) {
           // Skip invalid events
           console.warn('Skipping invalid event:', error);

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { EventSchema, Event } from '../schemas/eventModels.js';
 import { fetchJson, RECOMMENDATIONS_ENDPOINT } from '../shared/core.js';
 import { searchPerformers, searchEvents } from '../shared/endpoints.js';
+import { CondensedEvent, condenseEventData } from '../shared/helpers.js';
 
 // Schema for event recommendations
 const EventRecommendationsQuerySchema = z.object({
@@ -96,27 +96,59 @@ export const findEventRecommendationsTool = {
       // If we have a q parameter, try to look up performer and event IDs
       if (params.q) {
         try {
-          // Create promises for concurrent execution
-          const promises = [];
+          // First try to find performers with the query
+          const performers = await searchPerformers(params.q, params.per_page, 1);
           
-          // Add performer lookup promise
-          const performerPromise = searchPerformers(params.q, 10, 1).then(performers => {
-            if (performers.length > 0 && performers[0].id) {
-              performerId = performers[0].id;
+          // If we found performers, aggregate unique performer slugs and make Promise.all query
+          if (performers.length > 0) {
+            // Get unique performer slugs
+            const uniqueSlugs = [...new Set(performers.map((p: any) => p.slug).filter(Boolean))] as string[];
+            
+            if (uniqueSlugs.length > 0) {
+              // Create promises for each unique performer slug
+              const promises = uniqueSlugs.map(slug => {
+                return searchEvents(slug, params.per_page, { "performers.slug": slug });
+              });
+              
+              // Execute all promises
+              const results = await Promise.all(promises);
+              
+              // Merge events from all results
+              const allEvents: any[] = [];
+              for (const result of results) {
+                if (Array.isArray(result)) {
+                  allEvents.push(...result);
+                }
+              }
+              
+              // Remove duplicates based on event id
+              const eventIds = new Set();
+              const uniqueEvents = allEvents.filter(event => {
+                if (eventIds.has(event.id)) {
+                  return false;
+                }
+                eventIds.add(event.id);
+                return true;
+              });
+              
+              // Use the first event's ID for recommendations if available
+              if (uniqueEvents.length > 0 && uniqueEvents[0].id) {
+                eventId = uniqueEvents[0].id;
+              }
+            } else {
+              // If no valid slugs found, search events directly with the q parameter
+              const events = await searchEvents(params.q, params.per_page, {});
+              if (events.length > 0 && events[0].id) {
+                eventId = events[0].id;
+              }
             }
-          });
-          promises.push(performerPromise);
-          
-          // Add event lookup promise
-          const eventPromise = searchEvents(params.q, 10, {}).then(events => {
+          } else {
+            // If no performer found, search events directly with the q parameter
+            const events = await searchEvents(params.q, params.per_page, {});
             if (events.length > 0 && events[0].id) {
               eventId = events[0].id;
             }
-          });
-          promises.push(eventPromise);
-          
-          // Execute both promises concurrently
-          await Promise.all(promises);
+          }
         } catch (error) {
           // If lookup fails, continue with original query
           console.warn('Failed to lookup performer or event, continuing with original query:', error);
@@ -144,14 +176,15 @@ export const findEventRecommendationsTool = {
       
       // Extract events from recommendations
       const recommendationsRaw = Array.isArray(data) ? data : (data.recommendations || []);
-      const results: Event[] = [];
+      const results: CondensedEvent[] = [];
       
       for (const item of recommendationsRaw) {
         try {
           // Each recommendation has an event object
           if (item.event) {
-            const event = EventSchema.parse(item.event);
-            results.push(event);
+            // Condense the event data
+            const condensedEvent = condenseEventData(item.event);
+            results.push(condensedEvent);
           }
         } catch (error) {
           // Skip invalid events

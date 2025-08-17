@@ -16,7 +16,7 @@ const SectionInfoSchema = z.object({
 });
 
 const inputSchema = {
-  q: z.string().describe('Search query to find the event to get venue information for. Keep this short, no more than 4 words. The system will first look up the event ID automatically.'),
+  q: z.string().describe('Search query to find the event to get venue information for. Keep it to one main keyword (performer OR team OR venue). The system will first look up the event ID automatically.'),
   per_page: z.number().min(1).max(50).default(10).describe('Number of results to return per page (1-50). Default is 10.'),
   page: z.number().min(1).default(1).describe('Page number for pagination. Default is 1.'),
   format: z.enum(['structured', 'json']).default('structured').describe('Output format. Use "structured" for readable format (default) or "json" for raw API response. Only use "json" if explicitly requested.'),
