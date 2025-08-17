@@ -30,11 +30,13 @@ MCP_HTTP=1 PORT=8080 npm start
 
 ## Tools
 
-- `list_events`: List SeatGeek events with simple filters (q, performer, venue, time, type). Returns structured models or raw JSON with format="json".
-- `list_performers`: List SeatGeek performers with simple filters (q, id, slug, type). Returns structured models or raw JSON with format="json".
-- `list_venues`: List SeatGeek venues with simple filters (city, state, country, postal_code, q, id). Returns structured models or raw JSON with format="json".
-- `get_event_sections_info`: Get section and row information for a specific event. Returns detailed information about the sections and rows available for a specific event.
-- `list_event_recommendations`: Get recommended events based on seed parameters (performer, event, location). Returns structured models or raw JSON with format="json".
+- `find_events`: Search for events by performer, location, date, or venue. This tool is optimized for finding specific events based on user queries. If the query involves a performer, it first looks up the performer, then finds events for that performer. Otherwise, it searches events directly. Returns structured event data with venue information.
+
+- `find_event_recommendations`: Get personalized event recommendations based on performers, events, or location. This tool first searches for performers and/or events based on the query, then uses the IDs to find similar events. Use location parameters for nearby events.
+
+- `find_performer_recommendations`: Get personalized performer recommendations based on performers, events, or location. This tool first searches for performers and/or events based on the queries, then uses the IDs to find similar performers.
+
+- `retrieve_event_venue_information`: Get detailed seating information including sections and rows for a specific event. This tool first searches for the event using the provided query, then retrieves detailed venue layout information.
 
 ## Environment Variables
 
@@ -118,7 +120,7 @@ You can test the server in several ways:
      -H "Content-Type: application/json" \
      -H "Accept: application/json, text/event-stream" \
      -H "Mcp-Session-Id: YOUR_SESSION_ID_HERE" \
-     -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "list_events", "arguments": {"q": "concert", "per_page": 5}}}'
+     -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "find_events", "arguments": {"q": "concert", "per_page": 5}}}'
    ```
 
    For a complete working example, see:
@@ -185,12 +187,6 @@ You can use this MCP server with OpenWebUI through the mcpo (MCP Over HTTP) prox
    - Go to Settings > Tools & Integrations
    - Add a new OpenAPI-compatible tool
    - Use the URL: `http://localhost:8000`
-   - The available endpoints will be:
-     - `/list_events` (POST) - Search for events
-     - `/list_performers` (POST) - Search for performers
-     - `/list_venues` (POST) - Search for venues
-     - `/get_event_sections_info` (POST) - Get section info for an event
-     - `/list_event_recommendations` (POST) - Get event recommendations
 
 ### Example Usage in OpenWebUI
 

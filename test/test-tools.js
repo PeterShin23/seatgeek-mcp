@@ -92,14 +92,14 @@ async function testServer() {
     console.log('Available tools:', toolsResult ? toolsResult.result : 'No result found');
     console.log('\n');
     
-    // Test 3: Test list_events tool
-    console.log('3. Testing list_events tool...');
+    // Test 3: Test find_events tool
+    console.log('3. Testing find_events tool...');
     const eventsResponse = await axios.post(SERVER_URL, {
       jsonrpc: '2.0',
       id: 3,
       method: 'tools/call',
       params: {
-        name: 'list_events',
+        name: 'find_events',
         arguments: {
           q: 'concert',
           per_page: 3,
@@ -114,16 +114,16 @@ async function testServer() {
     console.log('Events search result:', eventsResult ? JSON.stringify(eventsResult, null, 2) : 'No result found');
     console.log('\n');
     
-    // Test 4: Test list_performers tool
-    console.log('4. Testing list_performers tool...');
-    const performersResponse = await axios.post(SERVER_URL, {
+    // Test 4: Test find_event_recommendations tool
+    console.log('4. Testing find_event_recommendations tool...');
+    const recommendationsResponse = await axios.post(SERVER_URL, {
       jsonrpc: '2.0',
       id: 4,
       method: 'tools/call',
       params: {
-        name: 'list_performers',
+        name: 'find_event_recommendations',
         arguments: {
-          q: 'band',
+          q: 'concert',
           per_page: 3,
           format: 'json'
         }
@@ -132,9 +132,49 @@ async function testServer() {
       headers: headers
     });
     
-    const performersResult = parseSseResponse(performersResponse.data);
-    console.log('Performers search result:', performersResult ? JSON.stringify(performersResult, null, 2) : 'No result found');
+    const recommendationsResult = parseSseResponse(recommendationsResponse.data);
+    console.log('Event recommendations result:', recommendationsResult ? JSON.stringify(recommendationsResult, null, 2) : 'No result found');
     console.log('\n');
+    
+    // Test 5: Test find_performer_recommendations tool
+    console.log('5. Testing find_performer_recommendations tool...');
+    const performerRecommendationsResponse = await axios.post(SERVER_URL, {
+      jsonrpc: '2.0',
+      id: 5,
+      method: 'tools/call',
+      params: {
+        name: 'find_performer_recommendations',
+        arguments: {
+          performer_q: 'band',
+          per_page: 3,
+          format: 'json'
+        }
+      }
+    }, {
+      headers: headers
+    });
+    
+    const performerRecommendationsResult = parseSseResponse(performerRecommendationsResponse.data);
+    console.log('Performer recommendations result:', performerRecommendationsResult ? JSON.stringify(performerRecommendationsResult, null, 2) : 'No result found');
+    console.log('\n');
+    
+    // Test 6: Test retrieve_event_venue_information tool
+    console.log('6. Testing retrieve_event_venue_information tool...');
+    const venueInfoResponse = await axios.post(SERVER_URL, {
+      jsonrpc: '2.0',
+      id: 6,
+      method: 'tools/call',
+      params: {
+        name: 'retrieve_event_venue_information',
+        arguments: {
+          q: 'concert',
+          per_page: 1,
+          format: 'json'
+        }
+      }
+    }, {
+      headers: headers
+    });
     
     console.log('All tests completed successfully!');
     

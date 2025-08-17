@@ -30,12 +30,12 @@ curl -s -X POST http://localhost:8080 \
   -H "Mcp-Session-Id: $SESSION_ID" \
   -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}'
 
-echo -e "\n\nExample of calling list_events tool..."
+echo -e "\n\nExample of calling find_events tool..."
 curl -s -X POST http://localhost:8080 \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -H "Mcp-Session-Id: $SESSION_ID" \
-  -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "list_events", "arguments": {"q": "washington nationals", "per_page": 3}}}'
+  -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "find_events", "arguments": {"q": "washington nationals", "per_page": 3}}}'
 
 # Clean up - stop the server
 kill $SERVER_PID

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { EventSchema, Event } from '../schemas/eventModels.js';
-import { EVENTS_ENDPOINT, PERFORMERS_ENDPOINT, fetchJson } from './shared.js';
+import { fetchJson } from '../shared/core.js';
+import { EVENTS_ENDPOINT, PERFORMERS_ENDPOINT, searchPerformers } from '../shared/endpoints.js';
 
 // Events query schema
 const EventsQuerySchema = z.object({
@@ -98,14 +99,7 @@ export const findEventsTool = {
       if (params.q) {
         try {
           // First try to find a performer with the query
-          const performerQuery = {
-            q: params.q,
-            per_page: params.per_page,
-            page: 1,
-          };
-          
-          const performerData = await fetchJson(PERFORMERS_ENDPOINT, performerQuery);
-          const performers = performerData.performers || [];
+          const performers = await searchPerformers(params.q, params.per_page, 1);
           
           // If we found a performer, use their slug to search for events
           if (performers.length > 0 && performers[0].slug) {

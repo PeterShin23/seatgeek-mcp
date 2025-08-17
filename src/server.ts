@@ -2,14 +2,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import dotenv from 'dotenv';
-import { listEventsTool } from './tools/eventList.js';
-import { listPerformersTool } from './tools/performerList.js';
-import { listVenuesTool } from './tools/venueList.js';
-import { sectionInfoTool } from './tools/sectionInfo.js';
-import { recommendationsTool } from './tools/recommendations.js';
-import { performerRecommendationsTool, eventRecommendationsTool, performerEventsTool } from './tools/specificRecommendations.js';
 import { findEventsTool } from './tools/findEvents.js';
 import { findEventRecommendationsTool } from './tools/findEventRecommendations.js';
+import { findPerformerRecommendationsTool } from './tools/findPerformerRecommendations.js';
+import { retrieveEventVenueInformationTool } from './tools/retrieveEventVenueInformation.js';
 import { createServer } from 'http';
 import { randomUUID } from 'crypto';
 import { systemInstructions } from './prompts/index.js';
@@ -24,16 +20,10 @@ const mcpServer = new McpServer({
 });
 
 // Register tools
-// mcpServer.tool('list_events', listEventsTool.description, listEventsTool.inputSchema, listEventsTool.handler);
-// mcpServer.tool('list_performers', listPerformersTool.description, listPerformersTool.inputSchema, listPerformersTool.handler);
-// mcpServer.tool('list_venues', listVenuesTool.description, listVenuesTool.inputSchema, listVenuesTool.handler);
-// mcpServer.tool('get_event_sections', sectionInfoTool.description, sectionInfoTool.inputSchema, sectionInfoTool.handler);
-// mcpServer.tool('get_recommendations', recommendationsTool.description, recommendationsTool.inputSchema, recommendationsTool.handler);
-// mcpServer.tool('get_performer_recommendations', performerRecommendationsTool.description, performerRecommendationsTool.inputSchema, performerRecommendationsTool.handler);
-// mcpServer.tool('get_event_recommendations', eventRecommendationsTool.description, eventRecommendationsTool.inputSchema, eventRecommendationsTool.handler);
-// mcpServer.tool('get_performer_events', performerEventsTool.description, performerEventsTool.inputSchema, performerEventsTool.handler);
 mcpServer.tool(findEventsTool.name, findEventsTool.description, findEventsTool.inputSchema, findEventsTool.handler);
 mcpServer.tool(findEventRecommendationsTool.name, findEventRecommendationsTool.description, findEventRecommendationsTool.inputSchema, findEventRecommendationsTool.handler);
+mcpServer.tool(findPerformerRecommendationsTool.name, findPerformerRecommendationsTool.description, findPerformerRecommendationsTool.inputSchema, findPerformerRecommendationsTool.handler);
+mcpServer.tool(retrieveEventVenueInformationTool.name, retrieveEventVenueInformationTool.description, retrieveEventVenueInformationTool.inputSchema, retrieveEventVenueInformationTool.handler);
 
 // Start server
 async function startServer() {

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { EventSchema, Event } from '../schemas/eventModels.js';
-import { fetchJson, EVENTS_ENDPOINT, PERFORMERS_ENDPOINT, RECOMMENDATIONS_ENDPOINT } from './shared.js';
+import { fetchJson, RECOMMENDATIONS_ENDPOINT } from '../shared/core.js';
+import { searchPerformers, searchEvents } from '../shared/endpoints.js';
 
 // Schema for event recommendations
 const EventRecommendationsQuerySchema = z.object({
@@ -95,44 +96,27 @@ export const findEventRecommendationsTool = {
       // If we have a q parameter, try to look up performer and event IDs
       if (params.q) {
         try {
-          // Always try to find a performer first
-          try {
-            const performerQuery = {
-              q: params.q,
-              per_page: 10,
-              page: 1
-            };
-            
-            const performerData = await fetchJson(PERFORMERS_ENDPOINT, performerQuery);
-            const performers = performerData.performers || [];
-            
-            // If we found a performer, get their ID
+          // Create promises for concurrent execution
+          const promises = [];
+          
+          // Add performer lookup promise
+          const performerPromise = searchPerformers(params.q, 10, 1).then(performers => {
             if (performers.length > 0 && performers[0].id) {
               performerId = performers[0].id;
             }
-          } catch (error) {
-            // If performer lookup fails, continue without it
-            console.warn('Failed to lookup performer:', error);
-          }
+          });
+          promises.push(performerPromise);
           
-          // Always try to find an event
-          try {
-            const eventQuery = {
-              q: params.q,
-              per_page: 10
-            };
-            
-            const eventData = await fetchJson(EVENTS_ENDPOINT, eventQuery);
-            const events = eventData.events || [];
-            
-            // If we found an event, get its ID
+          // Add event lookup promise
+          const eventPromise = searchEvents(params.q, 10, {}).then(events => {
             if (events.length > 0 && events[0].id) {
               eventId = events[0].id;
             }
-          } catch (error) {
-            // If event lookup fails, continue without it
-            console.warn('Failed to lookup event:', error);
-          }
+          });
+          promises.push(eventPromise);
+          
+          // Execute both promises concurrently
+          await Promise.all(promises);
         } catch (error) {
           // If lookup fails, continue with original query
           console.warn('Failed to lookup performer or event, continuing with original query:', error);

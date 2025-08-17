@@ -3,13 +3,22 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Base API and endpoints
-const SEATGEEK_API_BASE = "https://api.seatgeek.com/2";
-export const EVENTS_ENDPOINT = `${SEATGEEK_API_BASE}/events`;
-export const PERFORMERS_ENDPOINT = `${SEATGEEK_API_BASE}/performers`;
-export const VENUES_ENDPOINT = `${SEATGEEK_API_BASE}/venues`;
-export const SECTION_INFO_ENDPOINT = `${SEATGEEK_API_BASE}/events/section_info`;
-export const RECOMMENDATIONS_ENDPOINT = `${SEATGEEK_API_BASE}/recommendations`;
+// Import endpoints from shared endpoints file
+import {
+  EVENTS_ENDPOINT,
+  PERFORMERS_ENDPOINT,
+  VENUES_ENDPOINT,
+  SECTION_INFO_ENDPOINT,
+  RECOMMENDATIONS_ENDPOINT
+} from './endpoints.js';
+
+export {
+  EVENTS_ENDPOINT,
+  PERFORMERS_ENDPOINT,
+  VENUES_ENDPOINT,
+  SECTION_INFO_ENDPOINT,
+  RECOMMENDATIONS_ENDPOINT
+};
 
 // Networking defaults
 const DEFAULT_TIMEOUT_MS = 5000;

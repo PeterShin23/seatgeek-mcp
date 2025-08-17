@@ -65,13 +65,13 @@ async function runExample() {
     });
     
     // Step 3: Call a specific tool
-    console.log('\n3. Calling list_events tool...');
+    console.log('\n3. Calling find_events tool...');
     const eventsResponse = await axios.post(SERVER_URL, {
       jsonrpc: '2.0',
       id: 3,
       method: 'tools/call',
       params: {
-        name: 'list_events',
+        name: 'find_events',
         arguments: {
           q: 'washington nationals',
           per_page: 3,
