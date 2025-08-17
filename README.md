@@ -3,7 +3,7 @@
 Comprehensive MCP server exposing a registry of SeatGeek tools including events, performers, venues, section info, and recommendations as a TypeScript library.
 
 ## Demo
-<img width="1716" height="693" alt="image" src="https://github.com/user-attachments/assets/4333ab99-7337-41c5-beaf-e3fc68f209c2" />
+![seatgeek-mcp-demo](https://github.com/user-attachments/assets/699c41da-9d12-48d0-b413-c532c1397cad)
 
 ## Prerequisites
 
