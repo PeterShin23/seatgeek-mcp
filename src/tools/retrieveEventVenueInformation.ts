@@ -3,8 +3,7 @@ import { fetchJson, EVENTS_ENDPOINT, SECTION_INFO_ENDPOINT } from '../shared/cor
 import { searchEvents } from '../shared/endpoints.js';
 
 const EventVenueInformationQuerySchema = z.object({
-  q: z.string().describe('Search query to find the event to get venue information for. The system will first look up the event ID automatically.'),
-  per_page: z.number().min(1).max(50).default(10).describe('Number of results to return per page (1-50). Default is 10.'),
+  event_id: z.number().describe('The unique identifier for the event to retrieve venue information for. This ID is obtained from the event.'),
   page: z.number().min(1).default(1).describe('Page number for pagination. Default is 1.'),
   format: z.enum(['structured', 'json']).default('structured').describe('Output format. Use "structured" for readable format (default) or "json" for raw API response. Only use "json" if explicitly requested.'),
 });
@@ -16,8 +15,7 @@ const SectionInfoSchema = z.object({
 });
 
 const inputSchema = {
-  q: z.string().describe('Search query to find the event to get venue information for. Keep it to one main keyword (performer OR team OR venue). The system will first look up the event ID automatically.'),
-  per_page: z.number().min(1).max(50).default(10).describe('Number of results to return per page (1-50). Default is 10.'),
+  event_id: z.number().describe('The unique identifier for the event to retrieve venue information for. This ID is obtained from the event.'),
   page: z.number().min(1).default(1).describe('Page number for pagination. Default is 1.'),
   format: z.enum(['structured', 'json']).default('structured').describe('Output format. Use "structured" for readable format (default) or "json" for raw API response. Only use "json" if explicitly requested.'),
 };
@@ -37,30 +35,8 @@ export const retrieveEventVenueInformationTool = {
     try {
       const params = EventVenueInformationQuerySchema.parse(args);
       
-      // First, search for the event using the q parameter
-      const events = await searchEvents(params.q, params.per_page, {});
-      
-      // Check if we found any events
-      if (events.length === 0) {
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify({
-                error: 'No events found',
-                message: 'No events were found matching the provided search query.',
-                suggestion: 'Try a different search query or check the spelling.'
-              }, null, 2)
-            }
-          ]
-        };
-      }
-      
-      // Get the first event's ID
-      const eventId = events[0].id;
-      
       // Call the section info endpoint with the event ID
-      const data = await fetchJson(`${SECTION_INFO_ENDPOINT}/${eventId}`, {});
+      const data = await fetchJson(`${SECTION_INFO_ENDPOINT}/${params.event_id}`, {});
       
       if (params.format === 'json') {
         return {

@@ -77,9 +77,7 @@ Parameters:
 Get detailed seating information including sections and rows for a specific event. This tool first searches for the event using the provided query, then retrieves detailed venue layout information. Useful for understanding venue seating options and making ticket purchasing decisions.
 
 Parameters:
-- q: Search query to find the event to get venue information for. Keep it to one main keyword (performer OR team OR venue).
-- per_page: Number of results to return per page (1-50). Default is 10.
-- page: Page number for pagination. Default is 1.
+- event_id: The unique identifier for the event to retrieve venue information for. This ID is obtained from the event.
 - format: Output format. Use "structured" for readable format (default) or "json" for raw API response.
 
 ## Common Query Patterns
@@ -124,9 +122,10 @@ Parameters:
    - Args: {"performer_q": "The Weeknd"}
 
 ### Venue Information Examples
+This should come from a previous search where an event ID is present.
 10. **Seating information**: "Get venue details for the Taylor Swift concert"
     - Tool: retrieve_event_venue_information
-    - Args: {"q": "Taylor Swift"}
+    - Args: {"event_id": 123456}  // Replace with actual event ID
 
 ## Error Handling
 - If a search returns no results, try alternative search terms or broader filters
